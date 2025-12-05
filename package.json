@@ -1,0 +1,23 @@
+{
+  "name": "open-bamz-code-editor",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "Open BamZ code editor plugin",
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "eslint": "^9.8.0"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.2",
+    "mime": "^4.1.0",
+    "multer": "^2.0.2",
+    "simple-git": "^3.30.0",
+    "ssh2": "^1.17.0"
+  }
+}

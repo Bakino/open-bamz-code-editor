@@ -1,0 +1,45 @@
+FROM debian:12-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install OpenSSH server
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssh-server ca-certificates acl \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p /var/run/sshd
+
+# Global config:
+# - allow password login (for non-root users)
+# - disable challenge-response
+RUN sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+ && sed -i 's/^#\?ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config \
+ && sed -i 's/^#\?UsePAM.*/UsePAM yes/' /etc/ssh/sshd_config
+
+# SSH rules specifically for root
+# - root can only login via key (no password)
+RUN echo "" >> /etc/ssh/sshd_config \
+ && echo "StrictModes no" >> /etc/ssh/sshd_config \
+ && echo "" >> /etc/ssh/sshd_config \
+ && echo "Match User root" >> /etc/ssh/sshd_config \
+ && echo "    PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config \
+ && echo "    PasswordAuthentication no" >> /etc/ssh/sshd_config
+
+
+# Ensure .ssh directory exists and has correct permissions
+RUN mkdir -p /root/.ssh \
+ && chmod 700 /root/.ssh
+
+RUN groupadd -g 1001 appsgroup
+
+EXPOSE 22
+
+# chown root:root /root/.ssh/authorized_keys           set permission on root authorized_keys 
+# chmod 600 /root/.ssh/authorized_keys                 set permission on root authorized_keys 
+# chmod -R 751 /users/                                 /users is writable by the "master user" (1001), only traversable for others users 
+# chmod -R g+s /users/apps                             files in apps should be created with the SSH user but must have the "master user" as group
+# setfacl -R -m u::rwx,g::rwx,o::--x /users/apps       set ACL for file permission on create 
+# setfacl -R -d -m u::rwx,g::rwx,o::--x /users/apps    set as default ACL
+RUN echo "#!/bin/bash\nchown root:root /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys && chmod -R 751 /users/ && chmod -R g+s /users/apps && setfacl -R -m u::rwx,g::rwx,o::--x /users/apps && setfacl -R -d -m u::rwx,g::rwx,o::--x /users/apps && /usr/sbin/sshd -D" > /start.sh
+RUN chmod 755 /start.sh
+
+CMD ["/start.sh"]

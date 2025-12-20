@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>SSH Access</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            body { background: #f7fafc; }
+            .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace; }
+            pre.output { white-space: pre-wrap; word-break: break-word; }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-light bg-white shadow-sm mb-4">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Open BAMZ — SSH</span>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div id="alertContainer"></div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Create SSH Access</h5>
+                            <p class="card-text">Generate temporary SSH credentials to connect to this environment.</p>
+
+                            <button id="createUser" class="btn btn-primary w-100">
+                                <span id="createBtnText">Create Access</span>
+                                <span id="createSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                            </button>
+
+                            <div id="connectionInfo" class="mt-3 d-none">
+                                <div class="card bg-dark text-light">
+                                    <div class="card-body mono p-2">
+                                        <pre id="connectionInfoText" class="output mb-0"></pre>
+                                    </div>
+                                </div>
+                                <div class="mt-2 d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-light" id="copyConnection">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Upload SSH Public Key</h5>
+                            <p class="card-text">Paste your public key (from ~/.ssh/id_rsa.pub) to allow key-based login.</p>
+
+                            <form id="uploadKeyForm">
+                                <div class="mb-2">
+                                    <textarea id="publicKey" class="form-control mono" rows="6" placeholder="ssh-rsa AAAA..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <span id="uploadBtnText">Upload SSH Key</span>
+                                    <span id="uploadSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import BamzClient from '/bamz-lib/bamz-client.mjs';
+            const bamz = new BamzClient();
+            const API_BASE = '/open-bamz-code-editor/ssh';
+
+            const alertContainer = document.getElementById('alertContainer');
+
+            function showAlert(message, variant = 'info') {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `<div class="alert alert-${variant} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                alertContainer.appendChild(wrapper);
+                setTimeout(() => { try { wrapper.remove(); } catch {} }, 6000);
+            }
+
+            // Create Access
+            document.getElementById('createUser').addEventListener('click', async () => {
+                const btn = document.getElementById('createUser');
+                const text = document.getElementById('createBtnText');
+                const spinner = document.getElementById('createSpinner');
+
+                text.textContent = 'Creating...';
+                spinner.classList.remove('d-none');
+                btn.disabled = true;
+
+                try {
+                    const response = await bamz.fetch(`${API_BASE}/generateCredentials`, { method: 'POST' });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showAlert('User created successfully!', 'success');
+                        const infoEl = document.getElementById('connectionInfo');
+                        const connectionText = document.getElementById('connectionInfoText');
+                        const conn = data.connection || {};
+                        connectionText.textContent = `Username: ${conn.username || ''}\nPort: ${conn.port || ''}\nPassword: ${conn.password || ''}\n`;
+                        infoEl.classList.remove('d-none');
+                    } else {
+                        showAlert(data.error || 'Failed to create user', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error: ' + err.message, 'danger');
+                } finally {
+                    text.textContent = 'Create Access';
+                    spinner.classList.add('d-none');
+                    btn.disabled = false;
+                }
+            });
+
+            // Copy connection info
+            document.getElementById('copyConnection').addEventListener('click', () => {
+                const text = document.getElementById('connectionInfoText').textContent || '';
+                navigator.clipboard.writeText(text).then(() => showAlert('Connection info copied!', 'info'));
+            });
+
+            // Upload SSH Key
+            document.getElementById('uploadKeyForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const publicKey = document.getElementById('publicKey').value.trim();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const text = document.getElementById('uploadBtnText');
+                const spinner = document.getElementById('uploadSpinner');
+
+                text.textContent = 'Uploading...';
+                spinner.classList.remove('d-none');
+                btn.disabled = true;
+
+                try {
+                    const response = await bamz.fetch(`${API_BASE}/uploadKey`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ publicKey })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showAlert('SSH key uploaded — you can now connect with your key.', 'success');
+                        document.getElementById('publicKey').value = '';
+                    } else {
+                        showAlert(data.error || 'Failed to upload SSH key', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error: ' + err.message, 'danger');
+                } finally {
+                    text.textContent = 'Upload SSH Key';
+                    spinner.classList.add('d-none');
+                    btn.disabled = false;
+                }
+            });
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

@@ -1,5 +1,7 @@
 import { readFile, writeFile, readdir, stat, unlink } from 'fs/promises'
+// @ts-ignore
 import { mkdirs, remove } from 'fs-extra/esm';
+// @ts-ignore
 import path from 'path';
 import mime from 'mime';
 import multer from 'multer';
@@ -8,6 +10,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { commitAllChanges, createBranchWithWorktree, getCommitCount, getCommitInfo, getFileContentDiff, getFileContentDiffWithHead, listCommitsAsJson} from './git.mjs' ;
 
+// @ts-ignore
 const REGEXP_CHECK_PATH = /^[\p{L}\d\s\-_/.+]+$/u;
 
 const IGNORED_FILES = [".git", ".DS_Store", ".gitignore", "node_modules"];
@@ -61,13 +64,13 @@ export function initFileApi({router, contextOfApp, logger, graphql}){
      * 
      * @param {string} appName - Name of the app
      */
-    router.get('/files/:appName', (req, res) => {
+    router.get('/files', (req, res) => {
         
         (async () => {
             try{
                 // Check user has proper authorization
                 if(!await graphql.checkAppAccessMiddleware(req, res)){ return ;}
-                const filesDirectory = getSecurePath(req.query.dir??DEFAULT_DIR, req.params.appName);
+                const filesDirectory = getSecurePath(req.query.dir??DEFAULT_DIR, req.appName);
                 const getFiles = async (dir) => {
                     let results = [];
                     const list = await readdir(dir);
@@ -78,16 +81,16 @@ export function initFileApi({router, contextOfApp, logger, graphql}){
                         file = path.resolve(dir, file);
                         const statFile = await stat(file);
                         if (statFile && statFile.isDirectory()) {
-                            results.push({ name: path.basename(file), type: 'directory', children: (await getFiles(file)) });
+                            results.push({ name: path.basename(file), id: file.replace(/[^0-9a-zA-Z]/g, "_"), type: 'directory', children: (await getFiles(file)) });
                         } else {
-                            results.push({ name: path.basename(file), type: 'file', mimeType: mime.getType(file), size: statFile?.size, lastModified: statFile?.mtimeMs });
+                            results.push({ name: path.basename(file),  id: file.replace(/[^0-9a-zA-Z]/g, "_"), type: 'file', mimeType: mime.getType(file), size: statFile?.size, lastModified: statFile?.mtimeMs });
                         }
                     }
                     return results;
                 };
                 res.json(await getFiles(filesDirectory));
             }catch(err){
-                logger.warn(`Error list files ${req.params.appName} %o`, err)
+                logger.warn(`Error list files ${req.appName} %o`, err)
                 res.status(err.statusCode??500).json(err);
             }
         })();
@@ -192,6 +195,7 @@ export function initFileApi({router, contextOfApp, logger, graphql}){
 
                 const statFile = await stat(filePath);
 
+                // @ts-ignore
                 await commitAllChanges(filesDirectory, { commitMessage: req.body.commitMessage||`Save file ${path.relative(filesDirectory, filePath)}` });
 
                 await onFileChange({appName: req.params.appName, filePath, 
@@ -253,6 +257,7 @@ export function initFileApi({router, contextOfApp, logger, graphql}){
                 if(!await graphql.checkAppAccessMiddleware(req, res)){ return ;}
                 await unlink(filePath) ;
 
+                // @ts-ignore
                 await commitAllChanges(filesDirectory, { commitMessage: `Delete file ${path.relative(filesDirectory, filePath)}` });
 
                 await onFileChange({appName: req.params.appName, filePath, 
@@ -281,8 +286,10 @@ export function initFileApi({router, contextOfApp, logger, graphql}){
                 const filePath = path.join(filesDirectory, req.query.path);
                 if(!await graphql.checkAppAccessMiddleware(req, res)){ return ;}
                 await remove(filePath) ;
+                // @ts-ignore
                 await commitAllChanges(filesDirectory, { commitMessage: `Delete directory ${path.relative(filesDirectory, filePath)}` });
                 
+                // @ts-ignore
                 await onFileChange({appName: req.params.appName, filePath, changeType: "deleteDir", basePath: filesDirectory});
 
                 res.json({success: true})

@@ -1,0 +1,18 @@
+{
+  "routing": "HASH",
+  "viewsPath": "views",
+  "routes": [
+    {
+      "url": "/",
+      "path": "root",
+      "subRoutes": [
+        
+      ]
+    }
+  ],
+  "extensions": [
+    { "url": "https://cdn.jsdelivr.net/gh/Bakino/open-bamz-bootstrap@latest/front/lib/viewz-bootstrap5.mjs" },
+    { "url": "/plugin/open-bamz-viewz/lib/viewz-bamz.mjs" }
+
+  ]
+} 

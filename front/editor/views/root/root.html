@@ -1,0 +1,35 @@
+<div id="file-tree" class="border rounded p-2 bg-white">
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item p-1"  z-bind="f of files" z-recurse="children">
+
+            <!-- Header row (caret, icon, name, menu) -->
+            <div class="tree-item">
+                <button class="btn btn-primary" type="button" aaadata-bs-toggle="collapse" data-bs-target="#file_${f.id}">
+                    
+                    <span class="folder-toggle d-none"><i class="bi"></i></span>
+                </button>
+                <span class="file-icon"><i class="bi"></i></span>
+                <span class="name" title="${f.name}">${f.name}</span>
+
+                <!-- Action menu […] -->
+                <div class="dropdown ms-auto">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="${f.id}_actions" data-bs-toggle="dropdown" aria-expanded="false">
+                        […]
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="${f.id}_actions">
+                        <li><a class="dropdown-item" href="#" onclick="alert('Option 1 selected!'); return false;">Option 1</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('Option 2 selected!'); return false;">Option 2</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3️⃣  Collapsible container for the children -->
+            <div class="collapse ms-3" id="file_${f.id}">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item p-1" z-recurse-container></li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+</div>
+

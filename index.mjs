@@ -43,7 +43,7 @@ export const initPlugin = async ({runQuery, logger, loadPluginData, contextOfApp
         }
     }) ;
 
-    initFileApi({router, contextOfApp, logger, runQuery, graphql}) ;
+    initFileApi({router, contextOfApp, logger, graphql}) ;
     initSshApi({router, logger, graphql, appFileSystems}) ;
     
 
@@ -55,6 +55,7 @@ export const initPlugin = async ({runQuery, logger, loadPluginData, contextOfApp
         menu: [
             {
                 name: "admin", entries: [
+                    { name: "Code editor", link: "/plugin/open-bamz-code-editor/editor/" },
                     { name: "SSH access", link: "/plugin/open-bamz-code-editor/ssh.html" }
                 ]
             }

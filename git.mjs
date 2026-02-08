@@ -1,4 +1,6 @@
+// @ts-nocheck
 import fs from "fs-extra" ;
+// @ts-ignore
 import path from "path" ;
 import simpleGit from "simple-git" ;
 

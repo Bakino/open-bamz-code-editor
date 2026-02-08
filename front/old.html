@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .connection-info {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 15px;
+            display: none;
+            position: relative;
+        }
+
+        .connection-info pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #667eea;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSH Access</h1>
+
+        <div id="alertBox" class="alert"></div>
+
+        <!-- Section 1: Create User -->
+        <div class="section">
+            <h2>Create SSH Access</h2>
+                <button type="button" id="createUser" class="btn">
+                    <span class="btn-content">
+                        <span id="createBtnText">Create Access</span>
+                        <div class="spinner" id="createSpinner"></div>
+                    </span>
+                </button>
+
+            <div id="connectionInfo" class="connection-info">
+                <button class="copy-btn" onclick="copyConnectionInfo()">Copy</button>
+                <pre id="connectionInfoText"></pre>
+            </div>
+        </div>
+
+        <!-- Section 2: Upload SSH Key -->
+        <div class="section">
+            <h2>Upload SSH Public Key</h2>
+            <form id="uploadKeyForm">
+                <div class="form-group">
+                    <label for="publicKey">SSH Public Key</label>
+                    <textarea id="publicKey" placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB..." required></textarea>
+                    <p class="help-text">Paste your public key from ~/.ssh/id_rsa.pub</p>
+                </div>
+
+                <button type="submit" class="btn">
+                    <span class="btn-content">
+                        <span id="uploadBtnText">Upload SSH Key</span>
+                        <div class="spinner" id="uploadSpinner"></div>
+                    </span>
+                </button>
+            </form>
+        </div>
+
+       
+    </div>
+
+    <script type="module">
+        import BamzClient from "/bamz-lib/bamz-client.mjs";
+        const bamz = new BamzClient() ;
+        const API_BASE = '/open-bamz-code-editor/ssh';
+
+        // Create User Form
+        document.getElementById('createUser').addEventListener('click', async (e) => {
+            
+            const btnText = document.getElementById('createBtnText');
+            const spinner = document.getElementById('createSpinner');
+            const submitBtn = document.getElementById('createUser');
+
+            // Show loading state
+            btnText.textContent = 'Creating...';
+            spinner.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await bamz.fetch(`${API_BASE}/generateCredentials`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('User created successfully!', 'success');
+                    
+                    // Display connection info
+                    const connectionInfo = document.getElementById('connectionInfo');
+                    const connectionText = document.getElementById('connectionInfoText');
+                    
+                    connectionText.textContent = `
+SSH Connection Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Username: ${data.connection.username}
+Port:     ${data.connection.port}
+Password: ${data.connection.password}
+
+⚠️  Save this password securely!
+Add the config above to your ~/.ssh/config file
+                    `.trim();
+                    
+                    connectionInfo.style.display = 'block';
+                    
+                    // Auto-fill SSH key form
+                    document.getElementById('keyUserId').value = userId;
+                    document.getElementById('configUserId').value = userId;
+                } else {
+                    showAlert(data.error || 'Failed to create user', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error: ' + error.message, 'error');
+            } finally {
+                btnText.textContent = 'Create User';
+                spinner.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Upload SSH Key Form
+        document.getElementById('uploadKeyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const publicKey = document.getElementById('publicKey').value.trim();
+            const btnText = document.getElementById('uploadBtnText');
+            const spinner = document.getElementById('uploadSpinner');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            btnText.textContent = 'Uploading...';
+            spinner.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await bamz.fetch(`${API_BASE}/uploadKey`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ publicKey })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('SSH key uploaded successfully! You can now connect without password.', 'success');
+                    document.getElementById('publicKey').value = '';
+                } else {
+                    showAlert(data.error || 'Failed to upload SSH key', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error: ' + error.message, 'error');
+            } finally {
+                btnText.textContent = 'Upload SSH Key';
+                spinner.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        
+        // Show alert message
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert ${type}`;
+            alertBox.style.display = 'block';
+            
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 5000);
+        }
+
+        // Copy connection info to clipboard
+        function copyConnectionInfo() {
+            const text = document.getElementById('connectionInfoText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Connection info copied to clipboard!', 'info');
+            });
+        }
+
+        // Copy SSH config to clipboard
+        function copySSHConfig() {
+            const text = document.getElementById('sshConfigText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('SSH config copied to clipboard!', 'info');
+            });
+        }
+    </script>
+</body>
+</html>

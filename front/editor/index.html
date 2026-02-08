@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code editor</title>
+    <style>
+        html, body, body>div[zz-bind-root] {
+            height: 100%;
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    
+    <script type="module">
+        import { startViewZ } from "https://cdn.jsdelivr.net/gh/Bakino/viewz@b2597bbb965046b0bf48c0ef20324e3c4058331c/lib/frameworkz.mjs" ;
+
+        // import BamzClient from "/bamz-lib/bamz-client.mjs";
+
+//        const BamzClient = (await import(`/bamz-lib/bamz-client.mjs`)).default ;
+
+
+        startViewZ("viewz.config.json") ;
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

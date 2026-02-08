@@ -1,0 +1,28 @@
+/* .file {
+    padding-left: 10px
+} */
+
+#file-tree { max-width: 350px; }
+  .tree-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    position: relative;               /* needed so the dropdown menu is above children */
+  }
+  .folder-toggle { cursor:pointer; width:1rem; text-align:center; }
+  .file-icon    { width:1rem; text-align:center; }
+  .name         { flex-grow:1; }
+  .menu-btn     { padding:.1rem .4rem; }
+  .name[contenteditable] {
+    outline:1px solid #86b7fe;
+    background:#e9f5ff;
+  }
+  .preview {
+    white-space:pre-wrap;
+    word-break:break-all;
+    background:#f8f9fa;
+    border:1px solid #dee2e6;
+    height:100%;
+    padding:.75rem;
+    overflow:auto;
+  }

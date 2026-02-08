@@ -1,6 +1,9 @@
 import {Client} from 'ssh2';
+// @ts-ignore
 import crypto from 'crypto';
+// @ts-ignore
 import path from 'path';
+// @ts-ignore
 import fs from 'fs/promises';
 
 class SSHSandboxManager {
@@ -67,7 +70,7 @@ class SSHSandboxManager {
             readyTimeout: 10000
         });
 
-        await promise;
+        return await promise;
     }
 
     /**

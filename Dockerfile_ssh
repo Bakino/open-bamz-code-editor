@@ -1,10 +1,20 @@
 FROM debian:12-slim
-
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install OpenSSH server
+# Install OpenSSH server, Git, and dependencies for NodeSource
 RUN apt-get update \
- && apt-get install -y --no-install-recommends openssh-server ca-certificates acl \
+ && apt-get install -y --no-install-recommends \
+      openssh-server ca-certificates acl \
+      git \
+      curl gnupg \
+ && mkdir -p /etc/apt/keyrings \
+ && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+      | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+ && NODE_MAJOR=22 \
+ && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+      > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends nodejs \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /var/run/sshd
 
@@ -24,7 +34,6 @@ RUN echo "" >> /etc/ssh/sshd_config \
  && echo "    PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config \
  && echo "    PasswordAuthentication no" >> /etc/ssh/sshd_config
 
-
 # Ensure .ssh directory exists and has correct permissions
 RUN mkdir -p /root/.ssh \
  && chmod 700 /root/.ssh
@@ -33,12 +42,6 @@ RUN groupadd -g 1001 appsgroup
 
 EXPOSE 22
 
-# chown root:root /root/.ssh/authorized_keys           set permission on root authorized_keys 
-# chmod 600 /root/.ssh/authorized_keys                 set permission on root authorized_keys 
-# chmod -R 751 /users/                                 /users is writable by the "master user" (1001), only traversable for others users 
-# chmod -R g+s /users/apps                             files in apps should be created with the SSH user but must have the "master user" as group
-# setfacl -R -m u::rwx,g::rwx,o::--x /users/apps       set ACL for file permission on create 
-# setfacl -R -d -m u::rwx,g::rwx,o::--x /users/apps    set as default ACL
 RUN echo "#!/bin/bash\nchown root:root /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys && chmod -R 751 /users/ && chmod -R g+s /users/apps && setfacl -R -m u::rwx,g::rwx,o::--x /users/apps && setfacl -R -d -m u::rwx,g::rwx,o::--x /users/apps && /usr/sbin/sshd -D" > /start.sh
 RUN chmod 755 /start.sh
 
